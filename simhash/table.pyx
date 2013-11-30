@@ -49,6 +49,40 @@ cpdef PyHash(s):
     # AMF...
     return ret
 
+#Mush be utf-8
+cpdef PyHashToken(tokens):
+    '''
+    Utility function to return the simhash of a python string
+    '''
+    cdef Simhash[jenkins] hasher
+
+    ntokens = len(tokens)
+    if ntokens == 0:
+        return 0
+    utf8 = isinstance(tokens[0], unicode)
+    if not utf8:
+        raise UnicodeError(reason='Only support for utf-8')
+
+    # Convert Python array to NULL-terminated C array
+    cdef char **ctokens = <char **>malloc((ntokens + 1) * sizeof(char *))
+    if ctokens is NULL:
+        raise MemoryError()
+    try:
+        for i in xrange(ntokens):
+            tokens[i] = tokens[i].encode('utf-8') + '\0'
+            ctokens[i] = tokens[i]
+        ctokens[ntokens] = NULL
+
+        # Feed C array to C code
+        ret = hasher.hash(ctokens)
+    finally:
+
+        # Hand back our stone axe
+        free(ctokens)
+
+    # AMF...
+    return ret
+
 cpdef PyHashFp(pvec):
     '''
     Return simhash of a Python vector of longs.
