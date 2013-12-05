@@ -50,16 +50,16 @@ cpdef PyHash(s):
     return ret
 
 #Mush be utf-8
-cpdef PyHashToken(tokens):
+cpdef PyHashToken(tokenspy):
     '''
     Utility function to return the simhash of a python string
     '''
     cdef Simhash[jenkins] hasher
 
-    ntokens = len(tokens)
+    ntokens = len(tokenspy)
     if ntokens == 0:
         return 0
-    utf8 = isinstance(tokens[0], unicode)
+    utf8 = isinstance(tokenspy[0], unicode)
     if not utf8:
         raise UnicodeError(reason='Only support for utf-8')
 
@@ -69,8 +69,8 @@ cpdef PyHashToken(tokens):
         raise MemoryError()
     try:
         for i in xrange(ntokens):
-            tokens[i] = tokens[i].encode('utf-8') + '\0'
-            ctokens[i] = tokens[i]
+            str_tmp = tokenspy[i].encode('utf-8')+'\0'
+            ctokens[i] = str_tmp
         ctokens[ntokens] = NULL
 
         # Feed C array to C code
