@@ -14,6 +14,7 @@ cdef extern from "simhash-cpp/src/hash.hpp" namespace "Simhash":
     cdef cppclass Simhash[Hash]:
         hash_t hash(char *tokens[])
         hash_t hash_fp(uint64_t *vec, int len)
+        hash_t hash_hasher(uint64_t *vec, int len)
 
 ################################################################################
 # Core. If you're looking for insight into the library, look here
@@ -100,6 +101,30 @@ cpdef PyHashFp(pvec):
         for i in xrange(ntokens):
             cvec[i] = pvec[i]
         ret = hasher.hash_fp(cvec, ntokens)
+    finally:
+        # Hand back our stone axe
+        free(cvec)
+
+    # AMF...
+    return ret
+
+cpdef PyHashHasher(pvec):
+    '''
+    Return simhash of a Python vector of longs.
+    '''
+    cdef Simhash[jenkins] hasher
+
+    # Convert Python array into a C one
+    ntokens = len(pvec)
+    cdef uint64_t *cvec = <uint64_t *>malloc(ntokens * sizeof(uint64_t))
+    if cvec is NULL:
+        raise MemoryError()
+
+    try:
+        # Copy data into C structure, call C code
+        for i in xrange(ntokens):
+            cvec[i] = pvec[i]
+        ret = hasher.hash_hasher(cvec, ntokens)
     finally:
         # Hand back our stone axe
         free(cvec)
